@@ -2,8 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Beautiful Birthday 3D Door with Message Only When Open & Flower Rain</title>
+    <!-- Restrict zooming: disable user scaling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Beautiful Birthday 3D Door with Pin Code, Slow Animation, Flowers & Love Effects</title>
     <style>
       /* Reset and basic styles */
       * {
@@ -11,15 +12,19 @@
         margin: 0;
         padding: 0;
       }
+      html,
+      body {
+        height: 100%;
+      }
       body {
         margin: 0;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        /* Prevent text selection */
+        user-select: none;
+        -webkit-user-select: none;
+        /* Allow only vertical panning (no left/right swipe) */
+        touch-action: pan-y;
         background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        perspective: 1500px;
         overflow: hidden;
       }
       /* Scene styling */
@@ -35,6 +40,39 @@
         border-radius: 16px;
         overflow: hidden;
       }
+      /* Love effect container within the scene */
+      #loveEffect {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 2;
+      }
+      /* Floating heart styling */
+      .heart {
+        position: absolute;
+        font-size: 24px;
+        opacity: 0;
+        animation: floatHeart 3s ease-in-out forwards;
+      }
+      @keyframes floatHeart {
+        0% {
+          bottom: 20px;
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        30% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          bottom: 100%;
+          opacity: 0;
+          transform: scale(0.5);
+        }
+      }
       /* Door styling */
       .door {
         position: absolute;
@@ -44,7 +82,8 @@
         height: 100%;
         background: linear-gradient(135deg, #b06ab3, #4568dc);
         transform-origin: left;
-        transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        /* Slower transition for a more attractive slow door opening effect */
+        transition: transform 3s cubic-bezier(0.25, 0.8, 0.25, 1);
         box-shadow: inset -5px 0 15px rgba(0, 0, 0, 0.3);
         background-image: repeating-linear-gradient(
           45deg,
@@ -85,8 +124,7 @@
         border: 4px solid;
         border-image: linear-gradient(45deg, #ff9a9e, #fad0c4) 1;
         border-radius: 12px;
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3),
-          inset 0 0 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3), inset 0 0 8px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -198,6 +236,8 @@
   </head>
   <body>
     <div class="scene" id="scene">
+      <!-- Love effect container -->
+      <div id="loveEffect"></div>
       <div class="door" id="door"></div>
       <div class="frame">
         <h1>
@@ -221,54 +261,109 @@
       const messageBtn = document.getElementById("messageBtn");
       const birthdayMessage = document.getElementById("birthdayMessage");
       const scene = document.getElementById("scene");
-  
+      const loveEffectContainer = document.getElementById("loveEffect");
+      
+      let flowerInterval; // Interval for continuous flower rain
+      let heartInterval;  // Interval for continuous love hearts
+      
       function createFallingFlower() {
         const flower = document.createElement("div");
         flower.classList.add("flower");
         flower.innerText = "🌸";
-  
         const startLeft = Math.random() * scene.offsetWidth;
         flower.style.left = startLeft + "px";
-  
-        const duration = 3 + Math.random() * 2; // Duration between 3 and 5 seconds
+        const duration = 3 + Math.random() * 2;
         flower.style.animationDuration = duration + "s";
-  
         const delay = Math.random() * 0.5;
         flower.style.animationDelay = delay + "s";
-  
         scene.appendChild(flower);
         flower.addEventListener("animationend", () => {
           flower.remove();
         });
       }
-  
+      
       function startFlowerRain() {
-        const flowersCount = 30;
-        for (let i = 0; i < flowersCount; i++) {
-          setTimeout(createFallingFlower, i * 100);
-        }
+        // Create a continuous rain by setting an interval.
+        flowerInterval = setInterval(createFallingFlower, 300);
       }
-  
+      
+      function stopFlowerRain() {
+        clearInterval(flowerInterval);
+      }
+      
+      // Create a floating heart effect inside the wall.
+      function createFloatingHeart() {
+        const heart = document.createElement("div");
+        heart.classList.add("heart");
+        heart.innerText = "❤️";
+        // Set a random horizontal position within the container.
+        const randomLeft = Math.random() * (scene.offsetWidth - 30);
+        heart.style.left = randomLeft + "px";
+        // Append to love effect container.
+        loveEffectContainer.appendChild(heart);
+        heart.addEventListener("animationend", () => {
+          heart.remove();
+        });
+      }
+      
+      function startLoveEffect() {
+        heartInterval = setInterval(createFloatingHeart, 500);
+      }
+      
+      function stopLoveEffect() {
+        clearInterval(heartInterval);
+      }
+      
       toggleBtn.addEventListener("click", () => {
-        door.classList.toggle("open");
-        // Only show message elements when door is open
-        if (door.classList.contains("open")) {
-          startFlowerRain();
-          messageBtn.style.display = "block";
+        // If door is currently closed, prompt for code.
+        if (!door.classList.contains("open")) {
+          const code = prompt("Enter love code to open the door:");
+          if (code === "1432") {
+            door.classList.add("open");
+            startFlowerRain();
+            startLoveEffect();
+            messageBtn.style.display = "block";
+          } else {
+            alert("Wrong code! The door remains closed.");
+          }
         } else {
+          // If door is open, close it.
+          door.classList.remove("open");
           messageBtn.style.display = "none";
           birthdayMessage.style.display = "none";
+          stopFlowerRain();
+          stopLoveEffect();
         }
       });
-  
+      
       messageBtn.addEventListener("click", () => {
-        // Toggle the display of birthday message when message button is clicked
         if (birthdayMessage.style.display === "none" || birthdayMessage.style.display === "") {
           birthdayMessage.style.display = "block";
         } else {
           birthdayMessage.style.display = "none";
         }
       });
+      
+      // Disable right-click context menu
+      document.addEventListener("contextmenu", (e) => { e.preventDefault(); });
+      // Disable copy and cut actions
+      document.addEventListener("copy", (e) => e.preventDefault());
+      document.addEventListener("cut", (e) => e.preventDefault());
+      // Disable key combinations for copying (e.g. Ctrl+C)
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && ["c", "C", "s", "S"].includes(e.key)) {
+          e.preventDefault();
+        }
+      });
+      // Prevent double-tap zoom on mobile devices
+      let lastTouchEnd = 0;
+      document.addEventListener("touchend", event => {
+        const now = new Date().getTime();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, false);
     </script>
   </body>
 </html>
